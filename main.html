@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salary by Race and Gender</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 40px;
+    }
+    .line {
+      fill: none;
+      stroke-width: 2px;
+    }
+    .axis-label {
+      font-size: 14px;
+    }
+    .tooltip {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 8px;
+  pointer-events: none;
+  font-size: 13px;
+  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+  </style>
+</head>
+<body>
+  <h2>Bob White</h2>
+  <h2>NEWM-N328</h2>
+  <h2>Final Project</h2>
+  <h1>Median Salary in the United States by Race and Gender (1988–Present)</h1>
+  <svg id="chart" width="960" height="500"></svg>
+  <div class="tooltip" style="opacity: 0;"></div>
+  <script>
+    const margin = { top: 50, right: 150, bottom: 50, left: 70 },
+          width = 960 - margin.left - margin.right,
+          height = 500 - margin.top - margin.bottom;
+
+    const svg = d3.select("#chart")
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const parseYear = d3.timeParse("%Y");
+    const color = d3.scaleOrdinal()
+      .domain([
+        "Asian Men", "Asian Women",
+        "Black Men", "Black Women",
+        "Hispanic Men", "Hispanic Women",
+        "White Men", "White Women",
+        "Total Men", "Total Women"
+        ])
+      .range([
+        "#1f77b4", "#aec7e8",  // blue
+        "#d62728", "#ff9896",  // red
+        "#ff7f0e", "#ffbb78",  // orange
+        "#7f7f7f", "#c7c7c7",   // gray
+        "#2ca02c", "#98df8a",  // green
+        ]);
+
+    // Load the CSV data
+    d3.csv("salary_bras.csv").then(data => {
+      const keys = data.columns.slice(1); // demographic groups
+
+      data.forEach(d => {
+        d.Year = parseYear(d.Year);
+        keys.forEach(key => d[key] = +d[key]);
+      });
+
+      const xScale = d3.scaleTime()
+        .domain(d3.extent(data, d => d.Year))
+        .range([0, width]);
+
+      const yScale = d3.scaleLinear()
+        .domain([
+          0,
+          d3.max(data, d => d3.max(keys, key => d[key]))
+        ]).nice()
+        .range([height, 0]);
+
+      const xAxis = d3.axisBottom(xScale).ticks(10);
+      const yAxis = d3.axisLeft(yScale).ticks(10);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(xAxis);
+
+      svg.append("g")
+        .call(yAxis);
+
+      const line = d3.line()
+        .x(d => xScale(d.Year))
+        .y(d => yScale(d.value));
+
+      const demographicGroups = keys.map(name => ({
+        name,
+        values: data.map(d => ({ Year: d.Year, value: d[name] }))
+      }));
+
+      color.domain(keys);
+
+      svg.selectAll(".line")
+        .data(demographicGroups)
+        .enter()
+        .append("path")
+        .attr("class", "line")
+        .attr("id", d => `line-${d.name.replace(/\s+/g, '-')}`)
+        .attr("d", d => line(d.values))
+        .attr("stroke", d => color(d.name));
+
+        const tooltip = d3.select(".tooltip");
+
+    // Add invisible circles for hover interaction
+      demographicGroups.forEach(group => {
+        svg.selectAll(`.circle-${group.name.replace(/\s+/g, '-')}`)
+        .data(group.values)
+        .enter()
+        .append("circle")
+        .attr("class", `circle-${group.name.replace(/\s+/g, '-')}`)
+        .attr("cx", d => xScale(d.Year))
+        .attr("cy", d => yScale(d.value))
+        .attr("r", 4)
+        .attr("fill", color(group.name))
+        .attr("fill-opacity", 0)
+        .attr("stroke", "none")
+        .attr("stroke-width", 1)
+        .on("mouseover", (event, d) => {
+      tooltip.transition().duration(150).style("opacity", 1);
+      tooltip.html(`<strong>${group.name}</strong><br/>Year: ${d3.timeFormat("%Y")(d.Year)}<br/>Salary: $${d.value.toLocaleString()}`);
+        })
+        .on("mousemove", event => {
+      tooltip.style("left", (event.pageX + 15) + "px")
+             .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", () => {
+      tooltip.transition().duration(200).style("opacity", 0);
+        });
+      });
+
+      // Add interactive legend
+      const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(${width + 20}, 0)`);
+
+      demographicGroups.forEach((group, i) => {
+        const legendRow = legend.append("g")
+        .attr("transform", `translate(0, ${i * 20})`)
+        .style("cursor", "pointer")
+        .on("click", function () {
+            const lineId = `#line-${group.name.replace(/\s+/g, '-')}`;
+            const circleClass = `.circle-${group.name.replace(/\s+/g, '-')}`;
+            const currentLine = d3.select(lineId);
+            const currentCircles = d3.selectAll(circleClass);
+
+            const isHidden = currentLine.style("display") === "none";
+
+            currentLine.style("display", isHidden ? null : "none");
+            currentCircles.style("display", isHidden ? null : "none");
+
+            d3.select(this).select("text")
+                .style("opacity", isHidden ? 1 : 0.3);
+        });
+
+      legendRow.append("rect")
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("fill", color(group.name));
+
+      legendRow.append("text")
+        .attr("x", 18)
+        .attr("y", 10)
+        .attr("font-size", "12px")
+        .text(group.name);
+      });
+
+    });
+  </script>
+</body>
+<p><a href="documentation.html" target="_blank">View Project Documentation</a></p>
+</html>

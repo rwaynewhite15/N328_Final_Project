@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Salary Visualization Documentation</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 40px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      margin: 1em 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Documentation: Salary by Race and Gender</h1>
+
+  <h2>Design Process</h2>
+  <p>
+    The project started with the goal of exploring salary disparities across different races and genders. A perfect deataset was obtained and downloaded as a csv file from Kaggle. I chose a line chart to show trends over time and sketched early ideas that included multiple lines grouped by race. Initial attempts featured all lines on one graph with labels at the ends, but due to overlapping text, I pivoted to using an interactive legend for toggling visibility. The below image represents a sketch of the original idea.
+  </p>
+  <img width="360" height="640" src="sketch.png" alt="Initial sketch of design">
+
+  <h2>Rationale of Design Choices</h2>
+  <p>
+    I used color hue to represent racial groups (e.g., blue for Asian, red for Black, orange for Hispanic, green for White), and brightness to differentiate gender (darker for men, lighter for women). This helped viewers quickly distinguish between groups and patterns. A tooltip was added to show specific data points on hover, and the legend was made interactive so users could toggle lines on and off to reduce clutter and explore specific demographics.
+  </p>
+
+  <h2>Insights and Findings</h2>
+  <p>
+    Using the visualization, I was able to observe that across all years, men consistently earned more than women in each racial group. The gap between Asian Men and Hispanic Women was the widest. There was also a visible increase in salaries across all demographics over time, although the relative disparities remained consistent. The main questions I had about this dataset were: 'Which demographic has the highest median income?', and 'Have there been any significant changes to any of
+    these demographics in terms of median income?'. After viewing and interacting with this visualization it was easy to see that Asian men have been the highest earners for the past 25 years. Also, Asian women have made the largest improvement as a demographic in median income, surpassing total men and white men to become the second highest earning demographic behind Asian men.
+  </p>
+  <video width="640" height="360" controls>
+    <source src="Visualization_Presentation.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p><a href="main.html">Back to Visualization</a></p>
+</body>
+</html>
